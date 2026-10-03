@@ -1,6 +1,7 @@
 name = "moneygirl-chat-api"
 main = "worker/index.js"
 compatibility_date = "2026-10-03"
+workers_dev = true
 
 # Add the NoTrack API key as a Cloudflare secret:
 # wrangler secret put NOTRACK_API_KEY
