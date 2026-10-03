@@ -1,14 +1,20 @@
 {
   "manifest_version": 3,
   "name": "ChatHomeBase Helper",
-  "version": "1.0",
+  "version": "1.1",
   "permissions": [
     "activeTab",
     "storage"
   ],
+  "host_permissions": [
+    "https://raw.githubusercontent.com/*",
+    "https://*.workers.dev/*",
+    "http://localhost:3001/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
+  "options_page": "options.html",
   "content_scripts": [
     {
       "matches": [
