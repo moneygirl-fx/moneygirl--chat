@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "ChatHomeBase Helper",
+  "version": "1.0",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.textingfactory.com/*",
+        "*://*.chathomebase.com/*",
+        "*://*.chat/*",
+        "http://localhost/*"
+      ],
+      "js": ["content.js"]
+    }
+  ]
+}
