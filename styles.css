@@ -1,0 +1,82 @@
+#tf-helper-box {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 380px;
+  background: rgba(20, 20, 20, 0.88);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  padding: 12px;
+  z-index: 999999;
+  font-family: Arial, sans-serif;
+}
+
+.tf-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  cursor: move;
+}
+
+.tf-title {
+  font-weight: bold;
+  font-size: 14px;
+  color: #fff;
+}
+
+#tf-status {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 10px;
+}
+
+#tf-reply-text {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  padding: 10px;
+  font-size: 13px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+#tf-reply-text::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.tf-action-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tf-action-row button,
+#tf-minimize-btn,
+#tf-reopen-btn {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.tf-action-row button:hover,
+#tf-minimize-btn:hover,
+#tf-reopen-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+#tf-reopen-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1000000;
+}
