@@ -1,62 +1,87 @@
 // background.js
-console.log("ChatHomeBase Premium Helper Background Service Worker Active (Server Mode Fixed)");
+console.log("Money Girl Chat background active");
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  
-  // Route 1: Generating the AI Reply via Local Server
-  if (request.type === "GENERATE_REPLY") {
-    
-    // Convert your array history into a single string for the server
-    const conversationString = Array.isArray(request.agentHistory) 
-      ? request.agentHistory.join('\n') 
-      : (request.agentHistory || "");
+const CONFIG_URL = "https://raw.githubusercontent.com/moneygirl-fx/moneygirl--chat/money-girl/config.json";
+let configCache = { url: "", loadedAt: 0 };
+const CONFIG_CACHE_MS = 60 * 1000;
 
-    fetch("http://localhost:3001/suggest-reply", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      // Correctly mapping the keys from your content.js to the server.js format
-      body: JSON.stringify({
-        conversation: conversationString,
-        latestCustomerMessage: request.incomingMessage, // Fixed key mapping
-        myStyle: request.myStyle || []
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      // Prevents "undefined" from pasting if the server kicks back an error
-      if (data.error) {
-        console.error("Server returned error:", data.error);
-        sendResponse({ reply: "... (Server error, try again)" });
-      } else {
-        sendResponse(data);
-      }
-    })
-    .catch(error => {
-      console.error("Error communicating with local server:", error);
-      sendResponse({ reply: "... (Node server offline)" });
-    });
+async function getApiBaseUrl() {
+  const local = await chrome.storage.local.get(["apiBaseUrl"]);
+  if (local.apiBaseUrl) return String(local.apiBaseUrl).replace(/\/+$/, "");
 
-    return true; 
+  if (configCache.url && (Date.now() - configCache.loadedAt) < CONFIG_CACHE_MS) {
+    return configCache.url;
   }
 
-  // Route 2: Saving Your Typing Style to the Local Server Database
-  if (request.type === "SAVE_LEARNING") {
-    fetch("http://localhost:3001/save-learning", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(request.payload)
-    })
-    .then(response => response.json())
-    .then(data => sendResponse(data))
-    .catch(error => {
-      console.error("Error saving learning data:", error);
-      sendResponse({ ok: false });
-    });
+  try {
+    const response = await fetch(CONFIG_URL, { cache: "no-store" });
+    if (response.ok) {
+      const config = await response.json();
+      const url = String(config.apiBaseUrl || "").trim().replace(/\/+$/, "");
+      if (url) {
+        configCache = { url, loadedAt: Date.now() };
+        return url;
+      }
+    }
+  } catch (error) {
+    console.warn("Could not load remote config:", error);
+  }
 
-    return true; 
+  return "http://localhost:3001";
+}
+
+async function postToApi(path, payload) {
+  const baseUrl = await getApiBaseUrl();
+  const response = await fetch(`${baseUrl}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || data.reply || `HTTP ${response.status}`);
+  }
+  return data;
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === "GENERATE_REPLY") {
+    const conversationString = Array.isArray(request.agentHistory)
+      ? request.agentHistory.join("\n")
+      : (request.agentHistory || "");
+
+    postToApi("/suggest-reply", {
+      conversation: conversationString,
+      latestCustomerMessage: request.incomingMessage,
+      myStyle: request.myStyle || []
+    })
+      .then(data => sendResponse(data))
+      .catch(error => {
+        console.error("Reply API error:", error);
+        sendResponse({ reply: "... (Cloud server unavailable)" });
+      });
+
+    return true;
+  }
+
+  if (request.type === "SAVE_LEARNING") {
+    postToApi("/save-learning", request.payload || {})
+      .then(data => sendResponse(data))
+      .catch(error => {
+        console.error("Learning API error:", error);
+        sendResponse({ ok: false });
+      });
+
+    return true;
+  }
+
+  if (request.type === "SET_API_BASE_URL") {
+    const apiBaseUrl = String(request.apiBaseUrl || "").trim().replace(/\/+$/, "");
+    chrome.storage.local.set({ apiBaseUrl }).then(() => {
+      configCache = { url: "", loadedAt: 0 };
+      sendResponse({ ok: true });
+    });
+    return true;
   }
 });
